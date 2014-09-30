@@ -1,4 +1,5 @@
 from collections import defaultdict
+import numpy
 from pathlib import Path
 import re
 import skimage.io as skio
@@ -9,6 +10,14 @@ def process_masks(directory):
     control_counts = defaultdict(int)
     exp_lums = defaultdict(int)
     exp_counts = defaultdict(int)
+    il_bg_references = {
+        'FITC'    : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_FITC.png').astype(numpy.float64),
+        'CFP'     : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_CFP.png').astype(numpy.float64),
+        'TRITC'   : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_TRITC.png').astype(numpy.float64),
+        'DAPI'    : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_DAPI.png').astype(numpy.float64),
+        'YFP'     : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_YFP.png').astype(numpy.float64),
+        'mCherry' : skio.imread('/Volumes/scopearray/aging_fluorescence_9_25_14/references/aging_fluorescence_control_0000_mCherry.png').astype(numpy.float64)
+    }
     for mask_fpath in directory.glob('*_Mask*.png'):
         if re.search(r'/\._aging_', str(mask_fpath)) is None:
             mask = (skio.imread(str(mask_fpath)) == 0)
@@ -25,7 +34,8 @@ def process_masks(directory):
                     else:
                         lums = exp_lums
                         counts = exp_counts
-                    lum = int(skio.imread(str(fluo_image_fpath))[mask].sum())
+                    lum = (skio.imread(str(fluo_image_fpath)).astype(numpy.float64) / il_bg_references[image_type])[mask]
+                    lum = lum[~numpy.isnan(lum)].sum()
                     lums[image_type] += lum
                     counts[image_type] += int(mask.sum())
                     print('{} (number {}, set {}, type {}): {}'.format(fluo_image_fpath, int(image_number), image_set, image_type, lum))
