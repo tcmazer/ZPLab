@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 import skimage.io as skio
 
-def process_masks(directory):
+def process_masks(directory, rw=None):
     directory = Path(directory)
     control_lums = defaultdict(int)
     control_counts = defaultdict(int)
@@ -35,6 +35,10 @@ def process_masks(directory):
                         lums = exp_lums
                         counts = exp_counts
                     lum = (skio.imread(str(fluo_image_fpath)).astype(numpy.float64) / il_bg_references[image_type])[mask]
+                    if rw is not None:
+                        lum_ = skio.imread(str(fluo_image_fpath)).astype(numpy.float64) / il_bg_references[image_type]
+                        lum_[numpy.isnan(lum_)] = 0
+                        rw.showImage((lum_ * (65535 / lum_.max())).astype(numpy.uint16))
                     lum = lum[~numpy.isnan(lum)].sum()
                     lums[image_type] += lum
                     counts[image_type] += int(mask.sum())
