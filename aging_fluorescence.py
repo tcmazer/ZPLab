@@ -25,8 +25,17 @@ def process_masks(directory):
                     else:
                         lums = exp_lums
                         counts = exp_counts
-                    lum = skio.imread(str(fluo_image_fpath))[mask].sum()
+                    lum = int(skio.imread(str(fluo_image_fpath))[mask].sum())
                     lums[image_type] += lum
-                    counts[image_type] += 1
+                    counts[image_type] += int(mask.sum())
                     print('{} (number {}, set {}, type {}): {}'.format(fluo_image_fpath, int(image_number), image_set, image_type, lum))
     return control_lums, control_counts, exp_lums, exp_counts
+
+def get_mean_masked_pixel_intensities(control_lums, control_counts, exp_lums, exp_counts):
+    mean_control_lums = {}
+    mean_exp_lums = {}
+    for image_type, lum in control_lums.items():
+        mean_control_lums[image_type] = lum / control_counts[image_type]
+    for image_type, lum in exp_lums.items():
+        mean_exp_lums[image_type] = lum / exp_counts[image_type]
+    return mean_control_lums, mean_exp_lums
